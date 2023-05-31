@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>EasyOCR Flask App</title>
+</head>
+
+<body>
+    <h1>EasyOCR Flask App</h1>
+    <form action="/proccess" method="post">
+        <label for="url">Image URL:</label>
+        <input type="text" name="url" id="url" required>
+        <br>
+        <label for="language" method="post">Language:</label>
+        <select name="language" id="language">
+            <option value="chi_sim">Chinese</option>
+            <option value="tr">Turkish</option>
+            <option value="eng">English</option>
+        </select>
+        <br>
+        <label for="type" method="post">OCR Türü: </label>
+        <select name="type" id="type">
+            <option value="6">en iyisi</option>
+            <option value="11">ikinci</option>
+            <option value="3">ucuncu</option>
+            <option value="12">dorduncu</option>
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+    {% if error %}
+    <p>{{error}}</p>
+    {% endif %}
+    {% if sonuc %}
+    {{sonuc | safe}}
+    {% endif %}
+</body>
+
+</html>
