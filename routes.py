@@ -4,10 +4,7 @@ from PIL import Image, ImageOps
 import requests
 import os
 
-app = Flask(__name__, static_url_path="/static")
-
-env_config = os.getenv("PROD_APP_SETTINGS", "config.DevelopmentConfig")
-app.config.from_object(env_config)
+from webApp import app
 
 
 @app.route("/")
