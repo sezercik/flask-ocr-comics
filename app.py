@@ -90,7 +90,6 @@ def getText(url, lang, psm):
                     )
                     manga_balloons.pop(i + 1)
 
-    print(manga_balloons)
     for balloon in manga_balloons:
         lines = balloon["text"].split("\n")
         span_text = "<br>".join(lines)
