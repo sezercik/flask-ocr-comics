@@ -26,16 +26,6 @@ def proccess():
 
 
 def getText(url, lang, psm):
-    print(url)
-    img = Image.open(
-        requests.get(
-            url,
-            stream=True,
-        ).raw
-    )
-    rgbimg = Image.new("RGBA", img.size)
-    rgbimg = ImageOps.grayscale(rgbimg)
-    rgbimg.paste(img)
     img = Image.open(requests.get(url, stream=True).raw)
     rgbimg = ImageOps.grayscale(img)
 
@@ -49,9 +39,8 @@ def getText(url, lang, psm):
     html_output = ""
     num_boxes = len(ocr_data["text"])
     manga_balloons = []
-    same_line_text = ""
-    max_word_width = 0  # Maximum word width for a line
-    print(ocr_data)
+    current_balloon = None
+
     for i in range(num_boxes):
         if int(ocr_data["conf"][i]) > 65:  # Adjust confidence threshold as needed
             left = int(ocr_data["left"][i])
@@ -60,39 +49,54 @@ def getText(url, lang, psm):
             height = int(ocr_data["height"][i])
             text = ocr_data["text"][i]
 
-            if len(manga_balloons) > 0 and top - manga_balloons[-1]["top"] < 5:
-                same_line_text += " " + text
-                max_word_width = max(max_word_width, width)
+            if current_balloon is None:
+                current_balloon = {
+                    "left": left,
+                    "top": top,
+                    "width": width,
+                    "height": height,
+                    "text": text,
+                }
+            elif abs(top - current_balloon["top"]) < 50:
+                current_balloon["text"] += " " + text
+                current_balloon["width"] = left + width - current_balloon["left"]
+                current_balloon["height"] = max(current_balloon["height"], height)
             else:
-                if same_line_text:
-                    manga_balloons[-1]["text"] += " " + same_line_text
-                    manga_balloons[-1]["width"] = max_word_width
-                    same_line_text = ""
-                    max_word_width = 0
-                manga_balloons.append(
-                    {
-                        "left": left,
-                        "top": top,
-                        "height": height,
-                        "text": text,
-                        "width": width,
-                    }
-                )
+                manga_balloons.append(current_balloon)
+                current_balloon = {
+                    "left": left,
+                    "top": top,
+                    "width": width,
+                    "height": height,
+                    "text": text,
+                }
 
-    # Combine same line text from the last manga balloon, if any
-    if same_line_text:
-        manga_balloons[-1]["text"] += " " + same_line_text
-        manga_balloons[-1]["width"] = max_word_width
+    if current_balloon is not None:
+        manga_balloons.append(current_balloon)
 
-    # Create a single span tag for each manga balloon
+    for x in range(len(manga_balloons) // 2):
+        for i, balloon in enumerate(manga_balloons):
+            if i + 1 < len(manga_balloons):
+                if abs(balloon["left"] - manga_balloons[i + 1]["left"] < 5) and abs(
+                    balloon["top"] - manga_balloons[i + 1]["top"] < 250
+                ):
+                    balloon["text"] += manga_balloons[i + 1]["text"] + "\n  "
+                    balloon["width"] = max(
+                        balloon["width"], manga_balloons[i + 1]["width"]
+                    )
+                    balloon[height] = (
+                        max(balloon["height"], manga_balloons[i + 1]["height"]) + 100
+                    )
+                    manga_balloons.pop(i + 1)
+
     for balloon in manga_balloons:
-        span_text = balloon["text"].replace("<", "&lt;").replace(">", "&gt;")
-        span_style = f"position: absolute; left: {balloon['left']}px; top: {balloon['top']}px; background-color: #FFFF00; padding: 5px; display: inline-block; white-space: nowrap; width: {balloon['width'] + 100}px; height: {balloon['height']}px;"
+        lines = balloon["text"].split("\n")
+        span_text = "<br>".join(lines)
+        span_style = f"position: absolute; left: {balloon['left']}px; top: {balloon['top']}px; background-color: #FFFF00; padding: 5px; display: inline-block; white-space: nowrap; width: {balloon['width'] + 100}px; height: {balloon['height'] + 100}px;"
         html_output += (
             f'<span class="manga-balloon" style="{span_style}">{span_text}</span>\n'
         )
 
-    # Add image tag
     image_tag = f'<img src="{url}" alt="Comic Image">'
     html_output = f'<div style="position: relative;">{image_tag}\n{html_output}</div>'
 
