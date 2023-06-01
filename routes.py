@@ -2,8 +2,6 @@ from flask import Flask, render_template, request
 from pytesseract import *
 from PIL import Image, ImageOps
 import requests
-import os
-
 from webApp import app
 
 
