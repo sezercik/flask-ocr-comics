@@ -3,9 +3,7 @@ from pytesseract import *
 from PIL import Image, ImageOps
 from bs4 import BeautifulSoup
 import requests
-import socket
 
-socket.setdefaulttimeout(9999999)
 
 app = Flask(__name__, template_folder="templates")
 

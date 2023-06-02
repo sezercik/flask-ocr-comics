@@ -3,9 +3,7 @@ from pytesseract import *
 from PIL import Image, ImageOps
 import requests
 from bs4 import BeautifulSoup
-import socket
 
-socket.setdefaulttimeout(9999999)
 
 from webApp import app
 
