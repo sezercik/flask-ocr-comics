@@ -119,6 +119,13 @@ def getImageUrls(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
     img_tags = soup.find_all("img")
-    urls = [img["src"] for img in img_tags]
+    urls = []
+    for img in img_tags:
+        short = img["src"]
+        if (
+            ".webp" in short or ".jpg" in short or ".png" in short or ".jpeg" in short
+        ) and "logo" not in short:
+            urls.append(img["src"])
 
+    print(urls)
     return urls
