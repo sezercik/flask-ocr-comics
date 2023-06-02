@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import socket
 
-socket.setdefaulttimeout(9999999999)
+socket.setdefaulttimeout(9999999)
 
 from webApp import app
 

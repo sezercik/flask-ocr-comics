@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 import socket
 
-socket.setdefaulttimeout(9999999999)
+socket.setdefaulttimeout(9999999)
 
 app = Flask(__name__, template_folder="templates")
 
