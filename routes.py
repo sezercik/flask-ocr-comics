@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from pytesseract import *
 from PIL import Image, ImageOps
 import requests
+from bs4 import BeautifulSoup
+
 from webApp import app
 
 
@@ -24,10 +26,7 @@ def proccess():
 
 
 def getText(url, lang, psm):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, "html.parser")
-    img_tags = soup.find_all("img")
-    urls = [img["src"] for img in img_tags]
+    urls = getImageUrls(url)
     html_output = ""
 
     for url in urls:
@@ -113,3 +112,12 @@ def getText(url, lang, psm):
             )
 
     return html_output
+
+
+def getImageUrls(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    img_tags = soup.find_all("img")
+    urls = [img["src"] for img in img_tags]
+
+    return urls
