@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image Text Extraction</title>
+    <style>
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @font-face {
+            font-family: Anime Ace;
+            src: url(https://mangamtl.com/wp-content/themes/mmtl/font/animeace2bb_tt/animeace2_reg.ttf);
+            font-weight: normal;
+        }
+
+        .chapter font {
+            background: darkgray;
+        }
+
+        .img-responsive {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Image Text Extraction</h1>
+
+    <form id="previousPage" method="POST" action="/extract" hidden>
+        <label for="url">URL:</label>
+        {% if extra.url %}
+        <input type="text" id="url" name="url" value="{{extra.url}}" required>
+        {% else %}
+        <input type="text" id="url" name="url" required>
+        {% endif %}
+
+
+        <label for="language" method="post">Language:</label>
+        <select name="language" id="language">
+            {% if extra.language == "chi_sim" %}
+            <option value="chi_sim" selected>Chinese</option>
+            {% elif extra.language == "tr" %}
+            <option value="tr" selected>Turkish</option>
+            {% elif extra.language == "eng" %}
+            <option value="eng" selected>English</option>
+            {% endif %}
+            {% if not extra.language %}
+            <option value="chi_sim">Chinese</option>
+            <option value="tr">Turkish</option>
+            <option value="eng">English</option>
+            {% endif %}
+        </select>
+
+        <label for="type" method="post">OCR Türü: </label>
+        <select name="type" id="type">
+            {% if extra.type == "6" %}
+            <option value="6" selected>en iyisi</option>
+            {% elif extra.type == "11" %}
+            <option value="11" selected>ikinci</option>
+            {% elif extra.type == "3" %}
+            <option value="3" selected>ucuncu</option>
+            {% elif extra.type == "12" %}
+            <option value="12" selected>dorduncu</option>
+            {% endif%}
+            {% if not extra.type %}
+            <option value="6">en iyisi</option>
+            <option value="11">ikinci</option>
+            <option value="3">ucuncu</option>
+            <option value="12">dorduncu</option>
+            {% endif %}
+        </select>
+        <input type="text" id="previousPageNumber" name="page" value="{{current_page-1}}" hidden>
+    </form>
+    <form id="nextPage" method="POST" action="/extract" hidden>
+        <label for="url">URL:</label>
+        {% if extra.url %}
+        <input type="text" id="url" name="url" value="{{extra.url}}" required>
+        {% else %}
+        <input type="text" id="url" name="url" required>
+        {% endif %}
+
+
+        <label for="language" method="post">Language:</label>
+        <select name="language" id="language">
+            {% if extra.language == "chi_sim" %}
+            <option value="chi_sim" selected>Chinese</option>
+            {% elif extra.language == "tr" %}
+            <option value="tr" selected>Turkish</option>
+            {% elif extra.language == "eng" %}
+            <option value="eng" selected>English</option>
+            {% endif %}
+            {% if not extra.language %}
+            <option value="chi_sim">Chinese</option>
+            <option value="tr">Turkish</option>
+            <option value="eng">English</option>
+            {% endif %}
+        </select>
+
+        <label for="type" method="post">OCR Türü: </label>
+        <select name="type" id="type">
+            {% if extra.type == "6" %}
+            <option value="6" selected>en iyisi</option>
+            {% elif extra.type == "11" %}
+            <option value="11" selected>ikinci</option>
+            {% elif extra.type == "3" %}
+            <option value="3" selected>ucuncu</option>
+            {% elif extra.type == "12" %}
+            <option value="12" selected>dorduncu</option>
+            {% endif%}
+            {% if not extra.type %}
+            <option value="6">en iyisi</option>
+            <option value="11">ikinci</option>
+            <option value="3">ucuncu</option>
+            <option value="12">dorduncu</option>
+            {% endif %}
+        </select>
+        <p>{{current_page+1}}</p>
+        <input type="text" id="nextPageNumber" name="page" value="{{current_page + 1}}" hidden>
+    </form>
+    {% if error %}
+    <p>{{ error }}</p>
+    {% endif %}
+
+    {% if pages %}
+    <div>
+        {% if current_page > 1 %}
+        <button onclick="document.getElementById('previousPage').submit();" name="previous">Önceki Sayfa</button>
+        {% endif %}
+        {% if current_page < last_page %} <button
+            onclick="document.getElementById('nextPage').submit();console.log('next');" name="next">Sonraki Sayfa
+            </button>
+            {% endif %}
+    </div>
+    <p>{{pages | length}}</p>
+    <h2>Page {{ current_page }}</h2>
+    <div class="image-container">
+        {% for page in pages %}
+        <div style="position:relative; display: inline-block;">
+            <img id="{{page}}" src="{{ page.image }}" alt="Comic Image" class="img-responsive">
+            {% for text in page.text %}
+            <span class="chapter" value="" {{page}} style="{{ text.style }}">
+                {{ text.text }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+</body>
+
+</html>

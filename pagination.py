@@ -14,24 +14,47 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/proccess", methods=["POST"])
-async def proccess():
+@app.route("/extract", methods=["POST", "GET"])
+def extract():
     error = None
     if request.method == "POST":
-        sonuc = getText(
-            request.form["url"], request.form["language"], request.form["type"]
+        url = request.form.get("url")
+        if not url:
+            error = "URL is required"
+            return render_template("index.html", error=error)
+        language = request.form.get("language")
+        ocr_type = request.form.get("type")
+        page = request.form.get("page")
+        if page is None or int(page) < 1:
+            page = 1
+
+        pages = getPages(url, language, ocr_type, int(page))
+        return render_template(
+            "extract.html",
+            pages=pages,
+            current_page=int(page),
+            last_page=len(pages),
+            extra={"url": url, "language": language, "type": ocr_type},
         )
-        return render_template("index.html", sonuc=sonuc)
-    else:
-        error = "url girmediniz"
-        return render_template("proccess.html", error=error)
+
+    return render_template(
+        "extract.html",
+        pages=pages,
+        current_page=int(page),
+        last_page=len(pages),
+        extra={"url": url, "language": language, "type": ocr_type},
+    )
 
 
-def getText(url, lang, psm):
+def getPages(url, lang, psm, page):
     urls = getImageUrls(url)
-    html_output = ""
+    images_per_page = 10
+    start_index = (page - 1) * images_per_page
+    end_index = start_index + images_per_page
+    page_urls = urls[start_index:end_index]
 
-    for url in urls[::-1]:
+    pages = []
+    for url in page_urls:
         resp = requests.get(url)
         img = Image.open(BytesIO(resp.content))
         rgbimg = ImageOps.grayscale(img)
@@ -46,9 +69,9 @@ def getText(url, lang, psm):
         num_boxes = len(ocr_data["text"])
         manga_balloons = []
         current_balloon = None
-
+        cumulative_top = 0
         for i in range(num_boxes):
-            if int(ocr_data["conf"][i]) > 65:  # Adjust confidence threshold as needed
+            if int(ocr_data["conf"][i]) > 75:  # Adjust confidence threshold as needed
                 left = int(ocr_data["left"][i])
                 top = int(ocr_data["top"][i])
                 width = int(ocr_data["width"][i])
@@ -69,6 +92,7 @@ def getText(url, lang, psm):
                     current_balloon["height"] = max(current_balloon["height"], height)
                 else:
                     manga_balloons.append(current_balloon)
+                    cumulative_top += current_balloon["top"]
                     current_balloon = {
                         "left": left,
                         "top": top,
@@ -83,33 +107,40 @@ def getText(url, lang, psm):
         for x in range(len(manga_balloons) // 2):
             for i, balloon in enumerate(manga_balloons):
                 if i + 1 < len(manga_balloons):
-                    if abs(balloon["left"] - manga_balloons[i + 1]["left"] < 5) and abs(
-                        balloon["top"] - manga_balloons[i + 1]["top"] < 250
+                    if (
+                        abs(balloon["left"] - manga_balloons[i + 1]["left"]) < 5
+                        and abs(balloon["top"] - manga_balloons[i + 1]["top"]) < 250
                     ):
                         balloon["text"] += manga_balloons[i + 1]["text"] + "\n  "
                         balloon["width"] = max(
                             balloon["width"], manga_balloons[i + 1]["width"]
                         )
-                        balloon[height] = (
+                        balloon["height"] = (
                             max(balloon["height"], manga_balloons[i + 1]["height"])
                             + 100
                         )
                         manga_balloons.pop(i + 1)
 
+        image_data = {
+            "image": url,
+            "text": [],
+        }
+
+        # for balloon in manga_balloons[::-1]:
+        #     cumulative_top += balloon["top"]
+        #     balloon["top"] = cumulative_top
+        #     print(balloon["text"], " : ", balloon["top"])
+
         for balloon in manga_balloons:
             lines = balloon["text"].split("\n")
             span_text = "<br>".join(lines)
-            span_style = f"position: absolute; left: {balloon['left']}px; top: {balloon['top']}px; background-color: #FFFF00; padding: 5px; display: inline-block; white-space: nowrap; width: {balloon['width'] + 100}px; height: {balloon['height'] + 100}px;"
-            html_output += (
-                f'<span class="manga-balloon" style="{span_style}">{span_text}</span>\n'
-            )
+            span_style = f"font-family: Anime Ace; font-size: calc(3px + 1vw); top: {balloon['top']}px; left: {balloon['left']}px;  position: absolute; background: darkgray; width: {balloon['width'] + 100}px; height: {balloon['height'] + 100}px;"
+            image_data["text"].append({"text": span_text, "style": span_style})
 
-        image_tag = f'<img src="{url}" alt="Comic Image">'
-        html_output = (
-            f'<div style="position: relative;">{image_tag}\n{html_output}</div>'
-        )
-
-    return html_output
+        print(manga_balloons)
+        print(image_data)
+        pages.append(image_data)
+    return pages
 
 
 def getImageUrls(url):
@@ -124,5 +155,4 @@ def getImageUrls(url):
         ) and "logo" not in short:
             urls.append(img["src"])
 
-    print(urls)
     return urls
