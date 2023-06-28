@@ -1,5 +1,5 @@
-from flask import Flask
-from pytesseract import *
+# from flask import Flask
+# from pytesseract import *
 
-app = Flask(__name__)
-from webApp import routes
+# app = Flask(__name__)
+# from webApp import routes

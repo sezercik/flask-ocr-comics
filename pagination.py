@@ -4,9 +4,18 @@ from PIL import Image, ImageOps
 import requests
 from bs4 import BeautifulSoup
 from io import BytesIO
+from flask_caching import Cache
 
 
 app = Flask(__name__)
+cache = Cache(
+    config={
+        "CACHE_TYPE": "RedisCache",
+        "CACHE_REDIS_URL": "redis://127.0.0.1",
+        "CACHE_REDIS_PORT": "6379",
+    }
+)
+cache.init_app(app)
 
 
 @app.route("/")
@@ -47,6 +56,7 @@ def extract():
 
 
 def getPages(url, lang, psm, page):
+    print(url, lang, psm, page)
     urls = getImageUrls(url)
     images_per_page = 10
     start_index = (page - 1) * images_per_page
@@ -55,6 +65,7 @@ def getPages(url, lang, psm, page):
 
     pages = []
     for url in page_urls:
+        print(url)
         resp = requests.get(url)
         img = Image.open(BytesIO(resp.content))
         rgbimg = ImageOps.grayscale(img)
@@ -143,6 +154,7 @@ def getPages(url, lang, psm, page):
     return pages
 
 
+@cache.cached(timeout=3600)
 def getImageUrls(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
